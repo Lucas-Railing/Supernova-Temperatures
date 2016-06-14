@@ -5,12 +5,17 @@ from scipy.optimize import curve_fit
 from os import listdir
 from math import sqrt
 
+#Enter recession velocity here:
+v = 0.0
+beta = v/300000000.0
+shift = sqrt((1.0 - beta)/(1.0 + beta))
+print shift
+
 files = listdir('.')
 
 Flist = sorted([x for x in files if x.split('.')[-1]== 'flm'])
 DateList = [x.split('-')[1] for x in Flist]
 
-print Flist[0]
 YearList = []
 for x in DateList:
     YearList.append(float(x[0:4]))
@@ -31,53 +36,30 @@ while x < len(Flist):
     row = Dlist[x].readline().strip()
     while len(row) > 1:
         rlist = row.split()
-        lenlists[x].append(float(rlist[0]))
+        lenlists[x].append(shift*float(rlist[0]))
         maglists[x].append(float(rlist[1]))
         row = Dlist[x].readline().strip()
     Dlist[x].close()
     x = x + 1
-
-WeinsList = []
-for y in maglists:
-    i = 0
-    for x in y:
-        if x == max(y):
-            WeinsList.append(i)
-        i += 1
-#i = 0
-#while i < len(Flist):
-    #print len(lenlists[i]) - WeinsList[i]
-    #i += 1
 
 def bb(l, p, k):
     y = p*(l**(-5))/(e**(k/l) - 1)
     return y
 i = 0
 T    = []
-Tf   = []
-Tm   = []
-Fcol = []
-Mcol = []
 aday = []
 f = 1
 m = 0
-k = 0
 while i < len(Flist):
     x = asarray(lenlists[i])
     y = asarray(maglists[i])
-    popt, pcov = curve_fit(bb, x, y, p0 = [10**(19) + (10)*k, 10])
+    popt, pcov = curve_fit(bb, x, y, p0 = [10**(19), 10*10])
     for x in lenlists[i]:
         Fit[i].append(bb(x, popt[0], popt[1]))
     dt = datetime(int(DateList[i][0:4]), int(DateList[i][4:6]), int(DateList[i][6:8]), 0, 0)
     tt = dt.timetuple()
     aday.append(tt.tm_yday + 365*(YearList[i] - min(YearList)))
-    if sqrt(pcov[0,0])/10**20 > 20:
-        try:
-            T.append(0.002897/lenlists[i][WeinsList[i]])
-        except NameError:
-            None
-    else:
-        T.append(144043478.3/popt[1])
+    T.append(144043478.3/popt[1])
     i += 1
 
 i = 1
@@ -101,8 +83,7 @@ plt.title('Temperature vs. Time')
 plt.xlabel('Day')
 plt.ylabel('Temperature (K)')
 try:
-    plt.scatter(aday, Tf, color = 'b', label = 'fast')
-    plt.scatter(aday, Tm, color = 'g', label = 'mmt')
+    plt.scatter(aday, T, color = 'b', label = 'fast')
 except ValueError:
     plt.scatter(aday, T, color = 'b')
 plt.show()
