@@ -53,6 +53,7 @@ m = 0
 while i < len(Flist):
     x = asarray(lenlists[i])
     y = asarray(maglists[i])
+    # Adjust the initial guess on the curve fit here by setting 'p0 = [parameter 1, parameter 2]'
     popt, pcov = curve_fit(bb, x, y, p0 = [10**(19), 10*10])
     for x in lenlists[i]:
         Fit[i].append(bb(x, popt[0], popt[1]))
